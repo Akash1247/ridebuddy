@@ -67,7 +67,7 @@ public class BookingService {
                         .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
         
         if(booking.getStatus().equals("CANCELLED")){
-            return "Booking is already cancelled.";
+            throw new IllegalArgumentException("Booking is already cancelled");
         }
         booking.setStatus("CANCELLED");
 
