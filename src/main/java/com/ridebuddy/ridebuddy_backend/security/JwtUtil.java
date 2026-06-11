@@ -33,6 +33,17 @@ public class JwtUtil {
                 .compact();  
     }
 
+    // public String extractRole(String token){
+
+    //     Claims claims = Jwts.parser()
+    //                     .verifyWith((javax.crypto.SecretKey) getSigningKey())
+    //                     .build()
+    //                     .parseSignedClaims(token)
+    //                     .getPayload();
+    //     return claims.get("role", String.class);
+    // }
+            
+
     public String extractEmail(String token){
 
         Claims claims = Jwts.parser()

@@ -13,4 +13,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface RideRepository extends JpaRepository<Ride, Long> {
 
         public List<Ride> findByFromLocationAndToLocation(String fromLocation, String toLocation);
+
+        List<Ride> findByDriverId(Long driverId);
 }

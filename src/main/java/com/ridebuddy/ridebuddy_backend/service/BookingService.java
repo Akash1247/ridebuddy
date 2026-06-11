@@ -2,11 +2,14 @@ package com.ridebuddy.ridebuddy_backend.service;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.ridebuddy.ridebuddy_backend.dto.CreateBookingRequest;
 import com.ridebuddy.ridebuddy_backend.entity.Booking;
 import com.ridebuddy.ridebuddy_backend.entity.Ride;
+import com.ridebuddy.ridebuddy_backend.entity.User;
 import com.ridebuddy.ridebuddy_backend.repository.BookingRepository;
 import com.ridebuddy.ridebuddy_backend.repository.RideRepository;
 import com.ridebuddy.ridebuddy_backend.repository.UserRepository;
@@ -25,41 +28,50 @@ public class BookingService {
 
     public String createBooking(CreateBookingRequest request) {
 
-        // 1. Safe fetch or throw error if Ride doesn't exist
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        User loggedInUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         Ride ride = rideRepository.findById(request.rideId())
-                .orElseThrow(() -> new IllegalArgumentException("Ride not found with ID: " + request.rideId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Ride not found with ID: " + request.rideId()));
 
-        // 2. Safe check if User exists
-        boolean userExists = userRepository.existsById(request.userId());
-        if (!userExists) {
-            throw new IllegalArgumentException("User not found with ID: " + request.userId());
-        }
-
-        // 3. Check seat availability
         if (request.seatsBooked() > ride.getAvailableSeats()) {
-            throw new IllegalArgumentException("Not enough seats available. Requested: " 
-                    + request.seatsBooked() + ", Available: " + ride.getAvailableSeats());
+            throw new IllegalArgumentException(
+                    "Not enough seats available");
         }
 
-        // 4. Build and save booking object
         Booking booking = Booking.builder()
                 .rideId(request.rideId())
-                .userId(request.userId())
+                .userId(loggedInUser.getId()) // <-- JWT user
                 .seatsBooked(request.seatsBooked())
                 .status("BOOKED")
                 .build();
 
-        // 5. Update seats remaining
-        ride.setAvailableSeats(ride.getAvailableSeats() - request.seatsBooked());
+        ride.setAvailableSeats(
+                ride.getAvailableSeats() - request.seatsBooked());
 
         bookingRepository.save(booking);
         rideRepository.save(ride);
-        
+
         return "Booking created successfully";
     }
 
-    public List<Booking> getBookingsByUserId(Long userId){
-        return bookingRepository.findByUserId(userId);
+    public List<Booking> getMyBookings() {
+
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String email = authentication.getName();
+
+        User loggedInUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return bookingRepository.findByUserId(loggedInUser.getId());
     }
 
     public String cancelBooking(Long bookingId){

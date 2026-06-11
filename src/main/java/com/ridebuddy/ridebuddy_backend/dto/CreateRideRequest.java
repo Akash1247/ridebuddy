@@ -1,8 +1,6 @@
 package com.ridebuddy.ridebuddy_backend.dto;
 
 public record CreateRideRequest (
-
-    Long driverId,
     String host,
     String fromLocation,
     String toLocation,

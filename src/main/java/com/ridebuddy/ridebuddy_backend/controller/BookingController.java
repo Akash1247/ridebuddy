@@ -3,6 +3,7 @@ package com.ridebuddy.ridebuddy_backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,18 +21,20 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('USER')")
 public class BookingController {
 
     private final BookingService bookingService;   
+    
     
     @PostMapping("/create")
     public String createBooking(@RequestBody CreateBookingRequest request ){
         return bookingService.createBooking(request);
     }
 
-    @GetMapping("user/{userId}")
-    public ResponseEntity<List<Booking>> getBookingsByUserId(@PathVariable Long userId) {
-        return ResponseEntity.ok(bookingService.getBookingsByUserId(userId));
+    @GetMapping("/my-bookings")
+    public ResponseEntity<List<Booking>> getUserBookings() {
+        return ResponseEntity.ok(bookingService.getMyBookings());
     }
 
     @PutMapping("/{bookingId}/cancel")

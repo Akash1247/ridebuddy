@@ -3,6 +3,7 @@ package com.ridebuddy.ridebuddy_backend.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,6 +27,7 @@ public class RideController {
     private final RideService rideService;
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('DRIVER')")
     public String createRide(@RequestBody CreateRideRequest request) {
         return rideService.createRide(request);
     }
@@ -35,9 +37,11 @@ public class RideController {
         return ResponseEntity.ok(rideService.getAllRides());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Ride> getRideById(@PathVariable Long id){
-        return ResponseEntity.ok(rideService.getRideById(id));
+    
+    @GetMapping("/my-rides")
+    @PreAuthorize("hasRole('DRIVER')")
+    public ResponseEntity<List<Ride>> getRiderRide(){
+        return ResponseEntity.ok(rideService.getMyRides());
     }
 
     @GetMapping("/search")
