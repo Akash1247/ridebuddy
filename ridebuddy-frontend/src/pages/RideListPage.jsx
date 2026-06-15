@@ -1,12 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import RideCard from "../components/RideCard";
+
+import SockJS from "sockjs-client/dist/sockjs";
+import { Client } from "@stomp/stompjs";
 
 function RideListPage() {
 
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const stompClient = useRef(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
 
@@ -59,6 +63,99 @@ function RideListPage() {
       setLoading(false);
     }
   };
+
+
+  useEffect(() => {
+
+  // Wait until rides are loaded
+  if (rides.length === 0) return;
+
+  // Prevent duplicate connections
+  if (stompClient.current) return;
+
+  console.log("🚀 Initializing WebSocket...");
+
+  const socket = new SockJS(
+    "https://ridebuddy-zhsv.onrender.com/ws"
+  );
+
+  const client = new Client({
+
+    webSocketFactory: () => socket,
+
+    reconnectDelay: 5000,
+
+    debug: (msg) => {
+      console.log("STOMP:", msg);
+    },
+
+    onConnect: () => {
+
+      console.log("✅ WebSocket Connected");
+
+      rides.forEach((ride) => {
+
+        const topic = `/topic/rides/${ride.id}`;
+
+        console.log("📡 Subscribing:", topic);
+
+        client.subscribe(topic, (message) => {
+
+          console.log(
+            "📩 WebSocket Message:",
+            message.body
+          );
+
+          const update = JSON.parse(message.body);
+
+          setRides((prevRides) =>
+            prevRides.map((currentRide) =>
+              currentRide.id === update.rideId
+                ? {
+                    ...currentRide,
+                    availableSeats:
+                      update.availableSeats
+                  }
+                : currentRide
+            )
+          );
+        });
+      });
+    },
+
+    onWebSocketError: (error) => {
+
+      console.error(
+        "❌ WebSocket Error:",
+        error
+      );
+    },
+
+    onStompError: (frame) => {
+
+      console.error(
+        "❌ STOMP Error:",
+        frame.headers["message"]
+      );
+
+      console.error(frame.body);
+    }
+  });
+
+  client.activate();
+
+  stompClient.current = client;
+
+  return () => {
+
+    console.log("🔌 Disconnecting WebSocket");
+
+    client.deactivate();
+
+    stompClient.current = null;
+  };
+
+}, [rides]);
 
   return (
 

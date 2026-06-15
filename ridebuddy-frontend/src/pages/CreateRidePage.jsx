@@ -6,7 +6,7 @@ function CreateRidePage() {
 
   const role = localStorage.getItem("role");
 
-  if(role !== "DRIVER"){
+  if (role !== "DRIVER") {
     return <Navigate to="/rides" />;
   }
 
@@ -58,6 +58,7 @@ function CreateRidePage() {
       });
 
     } catch (error) {
+
       console.log(error);
       alert("Failed To Create Ride");
     }
@@ -89,7 +90,7 @@ function CreateRidePage() {
               value={ride.host}
               onChange={handleChange}
               placeholder="Enter Host Name"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -99,11 +100,11 @@ function CreateRidePage() {
             </label>
 
             <input
+              type="datetime-local"
               name="departureTime"
               value={ride.departureTime}
               onChange={handleChange}
-              placeholder="2026-06-08T10:00:00"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -117,7 +118,7 @@ function CreateRidePage() {
               value={ride.fromLocation}
               onChange={handleChange}
               placeholder="Noida"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -131,7 +132,7 @@ function CreateRidePage() {
               value={ride.toLocation}
               onChange={handleChange}
               placeholder="Gurgaon"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -146,7 +147,7 @@ function CreateRidePage() {
               value={ride.totalSeats}
               onChange={handleChange}
               placeholder="4"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -161,7 +162,7 @@ function CreateRidePage() {
               value={ride.price}
               onChange={handleChange}
               placeholder="250"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -175,7 +176,7 @@ function CreateRidePage() {
               value={ride.carModel}
               onChange={handleChange}
               placeholder="Hyundai i20"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -189,7 +190,7 @@ function CreateRidePage() {
               value={ride.carLicensePlate}
               onChange={handleChange}
               placeholder="UP32 AB 1234"
-              className="w-full border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border rounded-lg p-3"
             />
           </div>
 
@@ -197,7 +198,7 @@ function CreateRidePage() {
 
         <button
           onClick={handleSubmit}
-          className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-lg font-semibold transition"
+          className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-lg font-semibold"
         >
           Create Ride 🚀
         </button>

@@ -6,6 +6,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+
+import com.ridebuddy.ridebuddy_backend.dto.RideSeatUpdate;
+import com.ridebuddy.ridebuddy_backend.dto.BookingDetailsResponse;
 import com.ridebuddy.ridebuddy_backend.dto.CreateBookingRequest;
 import com.ridebuddy.ridebuddy_backend.entity.Booking;
 import com.ridebuddy.ridebuddy_backend.entity.Ride;
@@ -25,6 +29,10 @@ public class BookingService {
     private final RideRepository rideRepository;
 
     private final UserRepository userRepository;
+
+    private final EmailService emailService;
+
+    private final SimpMessagingTemplate messagingTemplate;
 
     public String createBooking(CreateBookingRequest request) {
 
@@ -56,7 +64,49 @@ public class BookingService {
                 ride.getAvailableSeats() - request.seatsBooked());
 
         bookingRepository.save(booking);
+
         rideRepository.save(ride);
+
+        messagingTemplate.convertAndSend(
+        "/topic/rides/" + ride.getId(),
+        new RideSeatUpdate(
+                ride.getId(),
+                ride.getAvailableSeats()
+        )
+        );
+
+        
+        try {
+                
+                emailService.sendBookingConfirmation(
+                loggedInUser.getEmail(),
+                "Ride Booking Confirmed",
+                """
+                Hi %s,
+
+                Your booking has been confirmed.
+
+                From: %s
+                To: %s
+
+                Seats Booked: %d
+
+                Thanks,
+                RideBuddy
+                """.formatted(
+                        loggedInUser.getName(),
+                        ride.getFromLocation(),
+                        ride.getToLocation(),
+                        request.seatsBooked()
+                )
+        );
+
+        } catch (Exception e) {
+
+        System.out.println(
+                "Email failed: " + e.getMessage()
+        );
+        }
 
         return "Booking created successfully";
     }
@@ -89,6 +139,59 @@ public class BookingService {
         ride.setAvailableSeats(ride.getAvailableSeats() + booking.getSeatsBooked());
         rideRepository.save(ride);
         bookingRepository.save(booking);
+
+        //Websocket wala cancel krne pe v seats update ho jyngim
+        messagingTemplate.convertAndSend(
+                "/topic/rides/" + ride.getId(),
+                new RideSeatUpdate(
+                        ride.getId(),
+                        ride.getAvailableSeats()
+                )
+        );
+
+        System.out.println(
+                "📢 Sent update for ride "
+                + ride.getId()
+                + " seats: "
+                + ride.getAvailableSeats()
+        );
+
         return "Booking cancelled successfully.";
     }
+
+        public List<BookingDetailsResponse> getRideDetails(Long rideId) {
+
+                System.out.println("========== DEBUG ==========");
+                System.out.println("Ride ID Received = " + rideId);
+
+                List<Booking> bookings =
+                        bookingRepository.findByRideId(rideId);
+
+                System.out.println("Bookings Found = " + bookings.size());
+
+                bookings.forEach(b ->
+                        System.out.println(
+                                "BookingId=" + b.getBookingId()
+                                        + " RideId=" + b.getRideId()
+                                        + " UserId=" + b.getUserId()
+                        ));
+
+                return bookings.stream().map(booking -> {
+
+                        User passenger = userRepository
+                                .findById(booking.getUserId())
+                                .orElseThrow(() ->
+                                        new IllegalArgumentException("User not found"));
+
+                        return new BookingDetailsResponse(
+                                booking.getBookingId(),
+                                passenger.getName(),
+                                passenger.getEmail(),
+                                booking.getSeatsBooked(),
+                                booking.getStatus()
+                        );
+
+                }).toList();
+                }
+
 }
