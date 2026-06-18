@@ -20,7 +20,6 @@ public class UserService {
     private final JwtUtil jwtUtil;
 
     public String signup(SignupRequest request) {
-
         User user = User.builder()
                 .name(request.name())
                 .email(request.email())
@@ -34,10 +33,8 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request) {
-
         User user = userRepository.findByEmail(request.email())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-
         if (!user.getPassword().equals(request.password())) {
             throw new IllegalArgumentException("Invalid password");
         }

@@ -39,6 +39,12 @@ public class RideService {
                     .host(request.host())
                     .fromLocation(request.fromLocation())
                     .toLocation(request.toLocation())
+                    .pickupLatitude(request.pickupLatitude())
+                    .pickupLongitude(request.pickupLongitude())
+                    .destinationLatitude(request.destinationLatitude())
+                    .destinationLongitude(request.destinationLongitude())
+                    .distanceKm(request.distanceKm())
+                    .estimatedDurationMinutes(request.estimatedDurationMinutes())
                     .departureTime(request.departureTime())
                     .totalSeats(request.totalSeats())
                     .availableSeats(request.totalSeats())
@@ -71,7 +77,11 @@ public class RideService {
     }
 
     public List<Ride> searchRides(String fromLocation, String toLocation){
-        return rideRepository.findByFromLocationAndToLocation(fromLocation, toLocation);
+        return rideRepository
+        .findByFromLocationContainingIgnoreCaseAndToLocationContainingIgnoreCase(
+                fromLocation,
+                toLocation
+        );
     }
 
     

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import RideCard from "../components/RideCard";
+import { calculateDistance } from "../utils/Distance";
 
 import SockJS from "sockjs-client/dist/sockjs";
 import { Client } from "@stomp/stompjs";
@@ -9,19 +10,21 @@ function RideListPage() {
 
   const [rides, setRides] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  
   const stompClient = useRef(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
+  const [userLocation, setUserLocation] = useState(null);
 
   const role = localStorage.getItem("role");
 
   useEffect(() => {
-    fetchRides();
+    // fetchRides();
+    getUserLocation();
   }, []);
 
   const fetchRides = async () => {
-
+    
     try {
 
       setLoading(true);
@@ -39,6 +42,64 @@ function RideListPage() {
 
       setLoading(false);
     }
+  };
+
+  const getUserLocation = () => {
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        setUserLocation({
+          latitude: lat,
+          longitude: lon
+        });
+
+        // const response = await fetch(
+        //   `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+        // );
+
+        // const data = await response.json();
+
+        // setFromLocation(
+        //   data.address.city ||
+        //   data.address.town ||
+        //   data.address.suburb ||
+        //   ""
+        // );
+      }
+    );
+  };
+
+  const getCurrentLocation = () => {
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        setUserLocation({
+          latitude: lat,
+          longitude: lon
+        });
+
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+        );
+
+        const data = await response.json();
+
+        setFromLocation(
+          data.address.city ||
+          data.address.town ||
+          data.address.suburb ||
+          ""
+        );
+      }
+    );
   };
 
   const searchRides = async () => {
@@ -65,18 +126,12 @@ function RideListPage() {
   };
 
 
-  useEffect(() => {
-
-  // Wait until rides are loaded
-  if (rides.length === 0) return;
-
-  // Prevent duplicate connections
-  if (stompClient.current) return;
+useEffect(() => {
 
   console.log("🚀 Initializing WebSocket...");
 
   const socket = new SockJS(
-    "https://ridebuddy-zhsv.onrender.com/ws"
+    `${import.meta.env.VITE_API_URL}/ws`
   );
 
   const client = new Client({
@@ -93,13 +148,9 @@ function RideListPage() {
 
       console.log("✅ WebSocket Connected");
 
-      rides.forEach((ride) => {
-
-        const topic = `/topic/rides/${ride.id}`;
-
-        console.log("📡 Subscribing:", topic);
-
-        client.subscribe(topic, (message) => {
+      client.subscribe(
+        "/topic/rides",
+        (message) => {
 
           console.log(
             "📩 WebSocket Message:",
@@ -109,36 +160,26 @@ function RideListPage() {
           const update = JSON.parse(message.body);
 
           setRides((prevRides) =>
-            prevRides.map((currentRide) =>
-              currentRide.id === update.rideId
+            prevRides.map((ride) =>
+              ride.id === update.rideId
                 ? {
-                    ...currentRide,
+                    ...ride,
                     availableSeats:
                       update.availableSeats
                   }
-                : currentRide
+                : ride
             )
           );
-        });
-      });
+        }
+      );
     },
 
     onWebSocketError: (error) => {
-
-      console.error(
-        "❌ WebSocket Error:",
-        error
-      );
+      console.error(error);
     },
 
     onStompError: (frame) => {
-
-      console.error(
-        "❌ STOMP Error:",
-        frame.headers["message"]
-      );
-
-      console.error(frame.body);
+      console.error(frame.headers["message"]);
     }
   });
 
@@ -148,14 +189,33 @@ function RideListPage() {
 
   return () => {
 
-    console.log("🔌 Disconnecting WebSocket");
-
     client.deactivate();
 
     stompClient.current = null;
   };
 
-}, [rides]);
+}, []);
+
+const sortedRides = [...rides].sort((a, b) => {
+
+  if (!userLocation) return 0;
+
+  const distanceA = calculateDistance(
+    userLocation.latitude,
+    userLocation.longitude,
+    a.pickupLatitude,
+    a.pickupLongitude
+  );
+
+  const distanceB = calculateDistance(
+    userLocation.latitude,
+    userLocation.longitude,
+    b.pickupLatitude,
+    b.pickupLongitude
+  );
+
+  return distanceA - distanceB;
+});
 
   return (
 
@@ -212,7 +272,14 @@ function RideListPage() {
 
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 col-span-2 flex gap-4">
+            
+            <button
+              onClick={getCurrentLocation}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg"
+            >
+              Use Current Location 📍
+            </button> 
 
             <button
               onClick={fetchRides}
@@ -249,7 +316,7 @@ function RideListPage() {
             <div className="bg-white rounded-2xl shadow-md p-10 text-center">
 
               <h2 className="text-2xl font-bold mb-2">
-                No Rides Found 😔
+                Search For the Rides you want.
               </h2>
 
               <p className="text-gray-500">
@@ -266,19 +333,27 @@ function RideListPage() {
           !loading &&
           rides.length > 0 && (
 
-            <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sortedRides.map((ride) => {
+              // Calculate distance for this specific ride
+              const distance = userLocation && ride.pickupLatitude 
+                ? calculateDistance(
+                    userLocation.latitude,
+                    userLocation.longitude,
+                    ride.pickupLatitude,
+                    ride.pickupLongitude
+                  )
+                : null;
 
-              {
-                rides.map((ride) => (
-
-                  <RideCard
-                    key={ride.id}
-                    ride={ride}
-                  />
-                ))
-              }
-
-            </div>
+              return (
+                <RideCard
+                  key={ride.id}
+                  ride={ride}
+                  distance={distance}
+                />
+              );
+            })}
+          </div>
           )
         }
 

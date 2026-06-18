@@ -48,13 +48,21 @@ public class Ride {
         @Column(unique = true)
         private String carLicensePlate;
 
+        private Double pickupLatitude;
+        private Double pickupLongitude;
+
+        private Double destinationLatitude;
+        private Double destinationLongitude;
+
+        private Double distanceKm;
+        private Integer estimatedDurationMinutes;
 
         public int getAvailableSeats() {
-    return availableSeats;
-}
+            return availableSeats;
+        }
 
-public void setAvailableSeats(int availableSeats) {
-    this.availableSeats = availableSeats;
-}
+        public void setAvailableSeats(int availableSeats) {
+            this.availableSeats = availableSeats;
+        }
 
     }

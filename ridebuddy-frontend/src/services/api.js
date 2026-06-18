@@ -1,23 +1,46 @@
 import axios from "axios";
 
-// const api = axios.create({
-//     baseURL: "http://localhost:8080/api"
-// });
-
 const api = axios.create({
-    // Localhost hata kar Render ka URL daal diya
-    baseURL: "https://ridebuddy-zhsv.onrender.com/api" 
+      baseURL: import.meta.env.VITE_API_URL,
 });
 
 api.interceptors.request.use((config) => {
 
-    const token = localStorage.getItem("token");
+    const publicRoutes = [
+        "/auth/login",
+        "/auth/signup"
+    ];
 
-    if(token){
-        config.headers.Authorization = `Bearer ${token}`;
+    const isPublicRoute = publicRoutes.some(
+        route => config.url.includes(route)
+    );
+
+    if (!isPublicRoute) {
+
+        const token = localStorage.getItem("token");
+
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
     }
 
     return config;
 });
+
+api.interceptors.response.use(
+    (response) => response,
+
+    (error) => {
+
+        if (error.response?.status === 401) {
+
+            localStorage.clear();
+
+            window.location.href = "/login";
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export default api;

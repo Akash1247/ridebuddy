@@ -1,7 +1,7 @@
 import { useState } from "react";
 import api from "../services/api";
 
-function RideCard({ ride }) {
+function RideCard({ ride,distance }) {
 
   const [seats, setSeats] = useState(1);
 
@@ -67,6 +67,13 @@ function RideCard({ ride }) {
         <p className="text-2xl font-bold text-green-600">
           ₹ {ride.price}
         </p>
+        {
+          distance && (
+            <p className="text-sm text-gray-500">
+              📍 {distance} km away
+            </p>
+          )
+        }
         <div className="flex items-center gap-2">
         <button
           onClick={() => seats > 1 && setSeats(seats - 1)}

@@ -68,12 +68,19 @@ public class BookingService {
         rideRepository.save(ride);
 
         messagingTemplate.convertAndSend(
-        "/topic/rides/" + ride.getId(),
+        "/topic/rides",
         new RideSeatUpdate(
                 ride.getId(),
                 ride.getAvailableSeats()
         )
         );
+
+        System.out.println(
+    "📢 Sent update for ride "
+    + ride.getId()
+    + " seats: "
+    + ride.getAvailableSeats()
+);
 
         
         try {
@@ -142,7 +149,7 @@ public class BookingService {
 
         //Websocket wala cancel krne pe v seats update ho jyngim
         messagingTemplate.convertAndSend(
-                "/topic/rides/" + ride.getId(),
+                "/topic/rides",
                 new RideSeatUpdate(
                         ride.getId(),
                         ride.getAvailableSeats()

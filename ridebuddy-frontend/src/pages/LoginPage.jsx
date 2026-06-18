@@ -18,9 +18,16 @@ function LoginPage() {
 
       console.log(response.data);
 
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.data.role);
+      const { token, role } = response.data;
+
+    localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
+
+    if (role === "USER") {
       navigate("/rides");
+    } else if (role === "DRIVER") {
+      navigate("/my-rides");
+    }
     } catch (error) {
       setError("Invalid email or password");
     }
