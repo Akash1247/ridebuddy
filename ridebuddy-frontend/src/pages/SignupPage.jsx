@@ -13,7 +13,7 @@ function SignupPage() {
 
   const handleSignup = async () => {
     try {
-      await api.post("api/auth/signup", {
+      await api.post("/api/auth/signup", {
         name,
         email,
         password,
