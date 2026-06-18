@@ -7,8 +7,8 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
 
     const publicRoutes = [
-        "/auth/login",
-        "/auth/signup"
+        "/api/auth/login",
+        "/api/auth/signup"
     ];
 
     const isPublicRoute = publicRoutes.some(
