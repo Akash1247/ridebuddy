@@ -131,7 +131,7 @@ useEffect(() => {
   console.log("🚀 Initializing WebSocket...");
 
   const socket = new SockJS(
-    `${import.meta.env.VITE_API_URL}/ws`
+    `${import.meta.env.VITE_WS_URL}/ws`
   );
 
   const client = new Client({
