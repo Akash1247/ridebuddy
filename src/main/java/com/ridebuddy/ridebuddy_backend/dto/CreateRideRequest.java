@@ -1,5 +1,7 @@
 package com.ridebuddy.ridebuddy_backend.dto;
 
+import java.time.LocalDateTime;
+
 public record CreateRideRequest(
 
     String host,
@@ -16,7 +18,7 @@ public record CreateRideRequest(
     Double distanceKm,
     Integer estimatedDurationMinutes,
 
-    String departureTime,
+    LocalDateTime departureTime,
 
     int totalSeats,
     double price,

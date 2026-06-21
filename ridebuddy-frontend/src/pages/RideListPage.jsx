@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import api from "../services/api";
 import RideCard from "../components/RideCard";
 import { calculateDistance } from "../utils/Distance";
+import AiSearchBar from "../components/AiSearch";
 
 import SockJS from "sockjs-client/dist/sockjs";
 import { Client } from "@stomp/stompjs";
@@ -14,6 +15,7 @@ function RideListPage() {
   const stompClient = useRef(null);
   const [fromLocation, setFromLocation] = useState("");
   const [toLocation, setToLocation] = useState("");
+  const [searchDate, setSearchDate] = useState("");
   const [userLocation, setUserLocation] = useState(null);
 
   const role = localStorage.getItem("role");
@@ -102,25 +104,23 @@ function RideListPage() {
     );
   };
 
-  const searchRides = async () => {
-
+const searchRides = async () => {
     try {
-
       setLoading(true);
+      
+      
+      const params = new URLSearchParams();
+      if (fromLocation) params.append("fromLocation", fromLocation);
+      if (toLocation) params.append("toLocation", toLocation);
+      if (searchDate) params.append("date", searchDate); 
 
-      const response = await api.get(
-        `/rides/search?fromLocation=${fromLocation}&toLocation=${toLocation}`
-      );
-
+      const response = await api.get(`/rides/search?${params.toString()}`);
       setRides(response.data);
 
     } catch (error) {
-
       console.log(error);
       alert("Search Failed");
-
     } finally {
-
       setLoading(false);
     }
   };
@@ -135,30 +135,21 @@ useEffect(() => {
   );
 
   const client = new Client({
-
     webSocketFactory: () => socket,
-
     reconnectDelay: 5000,
-
     debug: (msg) => {
       console.log("STOMP:", msg);
     },
-
     onConnect: () => {
-
       console.log("✅ WebSocket Connected");
-
       client.subscribe(
         "/topic/rides",
         (message) => {
-
           console.log(
             "📩 WebSocket Message:",
             message.body
           );
-
           const update = JSON.parse(message.body);
-
           setRides((prevRides) =>
             prevRides.map((ride) =>
               ride.id === update.rideId
@@ -173,49 +164,38 @@ useEffect(() => {
         }
       );
     },
-
     onWebSocketError: (error) => {
-      console.error(error);
-    },
+        console.error(error);
+      },
+      onStompError: (frame) => {
+        console.error(frame.headers["message"]);
+      }
+    });
+    client.activate();
+    stompClient.current = client;
+    return () => {
+      client.deactivate();
+      stompClient.current = null;
+    };
+    }, []);
 
-    onStompError: (frame) => {
-      console.error(frame.headers["message"]);
-    }
-  });
-
-  client.activate();
-
-  stompClient.current = client;
-
-  return () => {
-
-    client.deactivate();
-
-    stompClient.current = null;
-  };
-
-}, []);
-
-const sortedRides = [...rides].sort((a, b) => {
-
-  if (!userLocation) return 0;
-
-  const distanceA = calculateDistance(
-    userLocation.latitude,
-    userLocation.longitude,
-    a.pickupLatitude,
-    a.pickupLongitude
-  );
+  const sortedRides = [...rides].sort((a, b) => {
+    if (!userLocation) return 0;
+    const distanceA = calculateDistance(
+      userLocation.latitude,
+      userLocation.longitude,
+      a.pickupLatitude,
+      a.pickupLongitude
+    );
 
   const distanceB = calculateDistance(
     userLocation.latitude,
     userLocation.longitude,
     b.pickupLatitude,
     b.pickupLongitude
-  );
-
-  return distanceA - distanceB;
-});
+    );
+    return distanceA - distanceB;
+  });
 
   return (
 
@@ -226,7 +206,7 @@ const sortedRides = [...rides].sort((a, b) => {
         <div className="text-center mb-10">
 
           <h1 className="text-5xl font-bold text-blue-600 mb-3">
-            Available Rides 🚗
+            Available Rides
           </h1>
 
           <p className="text-gray-500">
@@ -234,6 +214,16 @@ const sortedRides = [...rides].sort((a, b) => {
           </p>
 
         </div>
+
+        {/* 2. NEW AI SEARCH BAR SECTION */}
+        <AiSearchBar 
+          onSearchStart={() => setLoading(true)}
+          onSearchResults={(data) => {
+            setRides(data);
+            setLoading(false);
+          }}
+          onSearchError={() => setLoading(false)}
+        />
 
         {/* Search Section */}
 
@@ -243,7 +233,7 @@ const sortedRides = [...rides].sort((a, b) => {
             Search Ride
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
 
             <input
               placeholder="From Location"
@@ -261,6 +251,12 @@ const sortedRides = [...rides].sort((a, b) => {
                 setToLocation(e.target.value)
               }
               className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="date"
+              value={searchDate}
+              onChange={(e) => setSearchDate(e.target.value)}
+              className="border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
             />
 
             <button

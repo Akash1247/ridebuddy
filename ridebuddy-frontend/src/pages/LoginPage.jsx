@@ -44,7 +44,7 @@ function LoginPage() {
           </h1>
 
           <p className="text-gray-500 mt-2">
-            Welcome Back 👋
+            Welcome Back
           </p>
         </div>
 

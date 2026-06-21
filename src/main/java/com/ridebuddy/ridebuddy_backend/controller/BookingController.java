@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ridebuddy.ridebuddy_backend.dto.BookingDetailsResponse;
 import com.ridebuddy.ridebuddy_backend.dto.CreateBookingRequest;
+import com.ridebuddy.ridebuddy_backend.dto.UserBookingDetailsResponse;
 import com.ridebuddy.ridebuddy_backend.entity.Booking;
 import com.ridebuddy.ridebuddy_backend.entity.Ride;
 import com.ridebuddy.ridebuddy_backend.service.BookingService;
@@ -37,7 +38,7 @@ public class BookingController {
     }
 
     @GetMapping("/my-bookings")
-    public ResponseEntity<List<Booking>> getUserBookings() {
+    public ResponseEntity<List<UserBookingDetailsResponse>> getUserBookings() {
         return ResponseEntity.ok(bookingService.getMyBookings());
     }
 

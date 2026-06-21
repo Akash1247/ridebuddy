@@ -1,5 +1,7 @@
 package com.ridebuddy.ridebuddy_backend.entity;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,7 +35,7 @@ public class Ride {
         
         private String toLocation;
         
-        private String departureTime;
+        private LocalDateTime departureTime;
         
         private int totalSeats;
         

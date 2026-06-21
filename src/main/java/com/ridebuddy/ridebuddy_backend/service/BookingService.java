@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.ridebuddy.ridebuddy_backend.dto.RideSeatUpdate;
+import com.ridebuddy.ridebuddy_backend.dto.UserBookingDetailsResponse;
 import com.ridebuddy.ridebuddy_backend.dto.BookingDetailsResponse;
 import com.ridebuddy.ridebuddy_backend.dto.CreateBookingRequest;
 import com.ridebuddy.ridebuddy_backend.entity.Booking;
@@ -118,18 +119,48 @@ public class BookingService {
         return "Booking created successfully";
     }
 
-    public List<Booking> getMyBookings() {
+public List<UserBookingDetailsResponse> getMyBookings() {
 
-        Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+    Authentication authentication =
+            SecurityContextHolder.getContext().getAuthentication();
 
-        String email = authentication.getName();
+    String email = authentication.getName();
 
-        User loggedInUser = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    User loggedInUser = userRepository.findByEmail(email)
+            .orElseThrow(() ->
+                    new IllegalArgumentException("User not found"));
 
-        return bookingRepository.findByUserId(loggedInUser.getId());
-    }
+    List<Booking> bookings =
+            bookingRepository.findByUserId(loggedInUser.getId());
+
+    return bookings.stream()
+            .map(booking -> {
+
+                Ride ride = rideRepository.findById(
+                        booking.getRideId()
+                ).orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Ride not found"));
+
+                return new UserBookingDetailsResponse(
+                        booking.getBookingId(),
+                        booking.getSeatsBooked(),
+                        booking.getStatus(),
+
+                        ride.getFromLocation(),
+                        ride.getToLocation(),
+                        ride.getDepartureTime(),
+
+                        ride.getHost(),
+                        ride.getCarModel(),
+                        ride.getPrice(),
+
+                        ride.getDistanceKm(),
+                        ride.getEstimatedDurationMinutes()
+                );
+            })
+            .toList();
+}
 
     public String cancelBooking(Long bookingId){
         Booking booking = bookingRepository.findById(bookingId)

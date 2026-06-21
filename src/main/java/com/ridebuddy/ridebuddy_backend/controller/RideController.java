@@ -45,15 +45,20 @@ public class RideController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Ride>> searchRides(@RequestParam String fromLocation,@RequestParam String toLocation){
-        return ResponseEntity.ok(rideService.searchRides(fromLocation, toLocation));
+    public ResponseEntity<List<Ride>> searchRides(
+            @RequestParam String fromLocation,
+            @RequestParam String toLocation,
+            @RequestParam(required = false) String date) { 
+            
+        return ResponseEntity.ok(rideService.searchRides(fromLocation, toLocation, date));
     }
+
 
     @DeleteMapping("delete/{id}")
     public ResponseEntity<String> deleteRide(@PathVariable Long id){
         return ResponseEntity.ok(rideService.deleteride(id));
     }
-    
+
     
         
     }

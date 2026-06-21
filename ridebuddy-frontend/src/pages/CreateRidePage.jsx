@@ -3,12 +3,13 @@ import api from "../services/api";
 import { Navigate } from "react-router-dom";
 import RideMap from "../components/RideMap";
 // CreateRidePage.jsx ke top par
-import { geocodeLocation } from "../utils/locationService";
+import {geocodeLocation, reverseGeocode} from "../utils/locationService";
+import { formatDateTime } from "../utils/dateUtils";
 
 function CreateRidePage() {
   
   const role = localStorage.getItem("role");
-  
+
   if (role !== "DRIVER") {
     return <Navigate to="/rides" />;
   }
@@ -91,27 +92,64 @@ function CreateRidePage() {
     }
   };
 
+
+
+  // const getCurrentLocation = () => {
+
+  //   navigator.geolocation.getCurrentPosition(
+  //     async (position) => {
+
+  //       const lat = position.coords.latitude;
+  //       const lon = position.coords.longitude;
+
+  //       setUserLocation({
+  //         latitude: lat,
+  //         longitude: lon
+  //       });
+
+  //       const response = await fetch(
+  //         `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
+  //       );
+
+  //       const data = await response.json();
+
+  //       setFromLocation(
+  //         data.address.city ||
+  //         data.address.town ||
+  //         data.address.suburb ||
+  //         ""
+  //       );
+  //     }
+  //   );
+  // };
+
   const getCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setCurrentPosition([lat, lng]);
-        setRide((prev) => ({
-          ...prev,
-
-          pickupLatitude: lat,
-          pickupLongitude: lng,
-          
-          fromLocation: `${lat.toFixed(4)}, ${lng.toFixed(4)}`
-        }));
-        },
-        (error) => {
+      async (position) => {
+        try {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setCurrentPosition([lat, lng]);
+          const locationName =
+            await reverseGeocode(lat, lng);
+          setRide((prev) => ({
+            ...prev,
+            pickupLatitude: lat,
+            pickupLongitude: lng,
+            fromLocation: locationName
+          }));
+        } catch (error) {
           console.log(error);
-          alert("Unable to fetch location");
+          alert("Unable to fetch address");
         }
-      );
-    };
+      },
+      (error) => {
+        console.log(error);
+        alert("Unable to fetch location");
+      }
+    );
+  };
+
     const searchDestination = async () => {
       if (!ride.toLocation) return;
       try {
@@ -128,7 +166,6 @@ function CreateRidePage() {
         setDestinationPosition([lat, lon]);
         setRide((prev) => ({
           ...prev,
-          toLocation: destination,
           destinationLatitude: lat,
           destinationLongitude: lon
         }));
@@ -138,66 +175,51 @@ function CreateRidePage() {
     };
     
     const calculateRouteFromInputs = async () => {
-
       if (!ride.fromLocation || !ride.toLocation) {
         return;
       }
-
       try {
-
         const fromCoords =
           await geocodeLocation(ride.fromLocation);
-
         const toCoords =
           await geocodeLocation(ride.toLocation);
-
         setCurrentPosition([
         fromCoords.latitude,
         fromCoords.longitude
       ]);
-
       setDestinationPosition([
         toCoords.latitude,
         toCoords.longitude
       ]);
-
       setRide((prev) => ({
         ...prev,
-
         pickupLatitude: fromCoords.latitude,
         pickupLongitude: fromCoords.longitude,
-
         destinationLatitude: toCoords.latitude,
         destinationLongitude: toCoords.longitude
       }));
-
       } catch (error) {
-
         console.log(error);
-
         alert("Unable to find route");
       }
     };
 
-    useEffect(() => {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (
+        ride.fromLocation &&
+        ride.toLocation
+      ) {
+        calculateRouteFromInputs();
+      }
 
-  const timer = setTimeout(() => {
+    }, 1000);
+    return () => clearTimeout(timer);
 
-    if (
-      ride.fromLocation &&
-      ride.toLocation
-    ) {
-      calculateRouteFromInputs();
-    }
-
-  }, 1000);
-
-  return () => clearTimeout(timer);
-
-}, [
-  ride.fromLocation,
-  ride.toLocation
-]);
+  }, [
+    ride.fromLocation,
+    ride.toLocation
+  ]);
 
     const getRoute = async () => {
       if (!currentPosition || !destinationPosition) return;
@@ -454,7 +476,7 @@ function CreateRidePage() {
           onClick={handleSubmit}
           className="mt-8 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg text-lg font-semibold"
         >
-          Create Ride 🚀
+          Create Ride
         </button>
 
       </div>

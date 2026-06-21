@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
+import { formatDateTime } from "../utils/dateUtils";
 
 function RideCard({ ride,distance }) {
 
@@ -57,7 +58,7 @@ function RideCard({ ride,distance }) {
 
         <p>
           🕒 <span className="font-semibold">Departure:</span>{" "}
-          {ride.departureTime}
+          {formatDateTime(ride.departureTime)}
         </p>
 
       </div>

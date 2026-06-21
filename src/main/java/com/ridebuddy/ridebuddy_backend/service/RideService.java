@@ -13,6 +13,10 @@ import com.ridebuddy.ridebuddy_backend.entity.Ride;
 import com.ridebuddy.ridebuddy_backend.repository.RideRepository;
 import com.ridebuddy.ridebuddy_backend.repository.UserRepository;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -59,7 +63,7 @@ public class RideService {
     }
 
     public List<Ride> getAllRides(){
-        return rideRepository.findAll();
+        return rideRepository.findByAvailableSeatsGreaterThan(0);
     }
 
     public List<Ride> getMyRides(){ 
@@ -76,11 +80,25 @@ public class RideService {
 
     }
 
-    public List<Ride> searchRides(String fromLocation, String toLocation){
-        return rideRepository
-        .findByFromLocationContainingIgnoreCaseAndToLocationContainingIgnoreCase(
-                fromLocation,
-                toLocation
+    public List<Ride> searchRides(String fromLocation, String toLocation, String dateStr) {
+        
+        
+        String from = (fromLocation != null) ? fromLocation : "";
+        String to = (toLocation != null) ? toLocation : "";
+
+        
+        if (dateStr != null && !dateStr.isEmpty()) {
+            LocalDate date = LocalDate.parse(dateStr);
+            LocalDateTime startOfDay = date.atStartOfDay();
+            LocalDateTime endOfDay = date.atTime(LocalTime.MAX); // 23:59:59
+
+            return rideRepository.findByFromLocationContainingIgnoreCaseAndToLocationContainingIgnoreCaseAndAvailableSeatsGreaterThanAndDepartureTimeBetween(
+                    from, to, 0, startOfDay, endOfDay
+            );
+        } 
+        
+        return rideRepository.findByFromLocationContainingIgnoreCaseAndToLocationContainingIgnoreCaseAndAvailableSeatsGreaterThan(
+                from, to, 0
         );
     }
 
