@@ -13,15 +13,21 @@ function Layout() {
 
   return (
     <>
-      {location.pathname !== "/" &&
+      {/* Show Navbar everywhere EXCEPT login and signup pages */}
+      {location.pathname !== "/login" &&
        location.pathname !== "/signup" && (
         <Navbar />
       )}
 
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupPage />} />
+        {/* Make RideListPage the main landing page */}
+        <Route path="/" element={<RideListPage />} />
         <Route path="/rides" element={<RideListPage />} />
+        
+        {/* Dedicated routes for authentication */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        
         <Route path="/create-ride" element={<CreateRidePage />} />
         <Route path="/my-bookings" element={<MyBookingsPage />} />
         <Route path="/my-rides" element={<MyRidesPage />} />

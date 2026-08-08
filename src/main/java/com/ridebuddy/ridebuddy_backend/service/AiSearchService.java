@@ -2,6 +2,7 @@ package com.ridebuddy.ridebuddy_backend.service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Collections; // ADD THIS IMPORT
 import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -22,7 +23,6 @@ public class AiSearchService {
     private final RideRepository rideRepository;
 
     public RideSearchFilters extractFilters(String userPrompt) {
-        // Return null if prompt is completely empty
         if (userPrompt == null || userPrompt.trim().isEmpty()) {
             return null; 
         }
@@ -60,15 +60,31 @@ public class AiSearchService {
         RideSearchFilters filters = extractFilters(prompt);
         System.out.println("Extracted Filters: " + filters);
 
-        // FIX: Create an empty filter so the baseline rules still apply
+        // --- THE FIX STARTS HERE ---
+        
+        // If the AI completely failed to return an object
         if (filters == null) {
-            filters = new RideSearchFilters(); 
+            return Collections.emptyList();
         }
+
+        // Check if the AI returned an object, but ALL major fields are null.
+        // This means the user asked something irrelevant like "what is my name".
+        boolean isIrrelevantPrompt = 
+            filters.fromLocation() == null && 
+            filters.toLocation() == null && 
+            filters.departureDate() == null && 
+            filters.minPrice() == null && 
+            filters.maxPrice() == null;
+
+        if (isIrrelevantPrompt) {
+            System.out.println("AI could not find relevant search criteria. Returning empty list.");
+            return Collections.emptyList(); 
+        }
+        
+        // --- THE FIX ENDS HERE ---
 
         return rideRepository.findAll(
                 RideSpecification.build(filters)
         );
     }
-
-    
 }
