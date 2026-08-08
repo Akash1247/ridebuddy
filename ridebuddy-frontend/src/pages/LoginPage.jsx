@@ -41,7 +41,7 @@ function LoginPage() {
   };
 
   // 1-Click Guest Login Handlers
-  const loginAsGuestPassenger = () => handleLogin("ay99059@gmail.com", "12345");
+  const loginAsGuestPassenger = () => handleLogin("ay99959@gmail.com", "12345");
   const loginAsGuestDriver = () => handleLogin("ay9979@gmail.com", "12345");
 
   return (
