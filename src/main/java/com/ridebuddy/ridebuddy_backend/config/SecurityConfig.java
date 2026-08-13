@@ -42,6 +42,7 @@ public class SecurityConfig {
                                 "/api/ai/**",
                                 "/api/rides/search",
                                 "api/rides/all",
+                                "api/heartbeat",
                                 "/v3/api-docs/**")
                         .permitAll()
 
