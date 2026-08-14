@@ -41,8 +41,8 @@ public class SecurityConfig {
                                 "/ws/**",
                                 "/api/ai/**",
                                 "/api/rides/search",
-                                "api/rides/all",
-                                "api/heartbeat",
+                                "/api/rides/all",
+                                "/api/heartbeat",
                                 "/v3/api-docs/**")
                         .permitAll()
 
