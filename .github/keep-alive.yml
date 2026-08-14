@@ -1,0 +1,15 @@
+name: Keep Backend Awake
+
+on:
+  schedule:
+    # This cron syntax tells GitHub to run this every 10 minutes
+    - cron: "*/10 * * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  ping-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping RideBuddy Heartbeat API
+        run: curl -s https://ridebuddy-backend.onrender.com/api/heartbeat
